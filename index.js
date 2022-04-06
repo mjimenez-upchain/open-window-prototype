@@ -16,7 +16,9 @@ function main() {
 	});
 
 	/**
-	 * On page load, simulate button click to get reference to child window
+	 * On page load, if there's a child window reference available and there is a value in local storage, simulate handleOpenWindowClick
+	 * If there is no child window reference and there is a value in local storage,
+	 * delete from local storage to prevent pop up blocking on future visits (this is because most browsers prevent pop ups on first load)
 	 */
 	window.addEventListener("load", () => {
 		const id = localStorage.getItem("openedWindowId");
@@ -24,12 +26,20 @@ function main() {
 		if (id) {
 			button.click();
 		}
+
+		if (!windowRef) {
+			if (id) {
+				localStorage.removeItem("openedWindowId");
+			}
+		}
 	});
 }
 
 function handleIncreaseClick() {
 	return () => {
-		windowRef.postMessage("increase", "*");
+		if (windowRef) {
+			windowRef.postMessage("increase", "*");
+		}
 	};
 }
 

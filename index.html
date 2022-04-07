@@ -6,9 +6,73 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Document</title>
 		<script src="index.js" defer></script>
+		<style>
+			.container {
+				border: 1px solid black;
+				box-sizing: border-box;
+				margin-bottom: 2rem;
+				padding: 2rem;
+				text-align: center;
+				width: 100%;
+			}
+		</style>
 	</head>
 	<body>
-		<button>Open window</button>
-		<button id="increase">Increase value</button>
+		<div class="container">
+			<button>Open window</button>
+			<button id="increase">Increase count in child window</button>
+		</div>
+		<h1>Opened window spike</h1>
+		<p>
+			This is an investigation spike for persisting state/communication between
+			parent window and child window.
+		</p>
+		<h2>Solves</h2>
+		<ul>
+			<li>
+				<p>
+					Keeping state/communication between parent window and child window on
+					parent window refresh
+				</p>
+			</li>
+		</ul>
+		<h2>Limitations</h2>
+		<ul>
+			<li>
+				<p>
+					If the user closes/reopens parent window tab or goes back/forward in
+					browser history while having child windows open, the parent window
+					will lose the references to the child windows
+				</p>
+
+				<ul>
+					<li>
+						The user will need to manually click "Open window" to start a new
+						instance
+					</li>
+					<li>
+						<p>
+							When the page loads, there may be cached data in local storage
+							since they didn't technically close the child windows.
+							<br />
+							If the user has disallowed pop ups on page load, the browser/tab
+							will attempt to open an undefined reference and a pop up blocked
+							notification will appear.
+							<br />
+							To fix this, we'll delete the cached data after the first pop up
+							blocked notification to prevent it from appearing in the future
+						</p>
+					</li>
+					<li>
+						<p>
+							If the user allows pop ups, depending on how many child windows
+							were open previously, that amount of windows will open everytime
+							they refresh the page until they manually close all the child
+							windows (deleting them from local storage)
+						</p>
+					</li>
+				</ul>
+			</li>
+		</ul>
 	</body>
 </html>

@@ -1,4 +1,5 @@
-let windowRef;
+const windowRefs = [];
+const windowIds = [];
 
 function main() {
 	const button = document.querySelector("button");
@@ -8,9 +9,19 @@ function main() {
 	increaseButton.addEventListener("click", handleIncreaseClick());
 
 	window.addEventListener("message", (event) => {
-		if (event.data === "close-popup") {
+		if (event.data.key === "close-popup") {
 			if (localStorage.getItem("openedWindowId")) {
-				localStorage.removeItem("openedWindowId");
+				const ids = JSON.parse(localStorage.getItem("openedWindowId"));
+
+				if (ids.some((id) => id === event.data.id)) {
+					const filteredIds = ids.filter((id) => id !== event.data.id);
+
+					if (filteredIds.length) {
+						localStorage.setItem("openedWindowId", JSON.stringify(filteredIds));
+					} else {
+						localStorage.removeItem("openedWindowId");
+					}
+				}
 			}
 		}
 	});
@@ -21,14 +32,16 @@ function main() {
 	 * delete from local storage to prevent pop up blocking on future visits (this is because most browsers prevent pop ups on first load)
 	 */
 	window.addEventListener("load", () => {
-		const id = localStorage.getItem("openedWindowId");
+		const ids = localStorage.getItem("openedWindowId");
 
-		if (id) {
+		if (ids) {
 			button.click();
+
+			return;
 		}
 
-		if (!windowRef) {
-			if (id) {
+		if (!windowRefs.length) {
+			if (ids) {
 				localStorage.removeItem("openedWindowId");
 			}
 		}
@@ -37,26 +50,61 @@ function main() {
 
 function handleIncreaseClick() {
 	return () => {
-		if (windowRef) {
-			windowRef.postMessage("increase", "*");
+		if (windowRefs.length) {
+			windowRefs.forEach((windowRef) => {
+				windowRef.postMessage("increase", "*");
+			});
 		}
 	};
 }
 
 function handleOpenWindowClick() {
 	return () => {
-		windowRef = window.open("", "opened_window", "popup,width=320,height=320");
+		const ids = JSON.parse(localStorage.getItem("openedWindowId"));
 
-		if (windowRef.location.href === "about:blank") {
-			windowRef = window.open(
-				"window.html",
-				"opened_window",
-				"popup,width=320,height=320"
-			);
+		if (ids && !windowRefs.length) {
+			ids.forEach((id) => {
+				const windowRef = window.open("", id, "popup,width=320,height=320");
 
-			localStorage.setItem("openedWindowId", "opened_window");
+				if (windowRef?.location.href === "about:blank") {
+					openNewWindow(id);
+
+					return;
+				}
+
+				if (windowRef) {
+					windowIds.push(id);
+					windowRefs.push(windowRef);
+				} else {
+					const filteredIds = JSON.parse(
+						localStorage.getItem("openedWindowId")
+					).filter((_id) => _id !== id);
+
+					if (filteredIds.length) {
+						localStorage.setItem("openedWindowId", JSON.stringify(filteredIds));
+					} else {
+						localStorage.removeItem("openedWindowId");
+					}
+				}
+			});
+
+			return;
 		}
+
+		openNewWindow();
 	};
+}
+
+function openNewWindow(windowName = `opened_window_${Math.random()}`) {
+	const windowRef = window.open(
+		"window.html",
+		windowName,
+		"popup,width=320,height=320"
+	);
+
+	windowIds.push(windowName);
+	windowRefs.push(windowRef);
+	localStorage.setItem("openedWindowId", JSON.stringify(windowIds));
 }
 
 main();

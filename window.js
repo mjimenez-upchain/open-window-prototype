@@ -11,7 +11,13 @@ function main() {
 	});
 
 	window.addEventListener("beforeunload", () => {
-		window.opener.postMessage("close-popup", "*");
+		window.opener.postMessage(
+			{
+				key: "close-popup",
+				id: window.name,
+			},
+			"*"
+		);
 	});
 }
 
